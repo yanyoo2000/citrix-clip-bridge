@@ -1,0 +1,1 @@
+start /min "" "paste.bat"
