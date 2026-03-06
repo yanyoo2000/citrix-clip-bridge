@@ -120,6 +120,7 @@ p {
   grid-column: 1;
   grid-row: 1;
   min-height: 0;
+  overflow: auto;
 }
 
 .panel-control {
@@ -128,6 +129,7 @@ p {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: auto;
 }
 
 .panel-logs {
@@ -151,6 +153,7 @@ p {
   display: grid;
   gap: 8px;
   margin-bottom: 12px;
+  min-width: 0;
 }
 
 .mode-picker {
@@ -187,11 +190,11 @@ p {
 
 .mode-panel {
   margin-bottom: 4px;
+  min-width: 0;
 }
 
 .field span,
-.toggle span,
-dt {
+.toggle span {
   color: var(--muted);
   font-size: 13px;
   letter-spacing: 0.05em;
@@ -213,6 +216,7 @@ input[type="number"] {
   background: rgba(255, 255, 255, 0.04);
   color: var(--text);
   font: inherit;
+  min-width: 0;
 }
 
 input[type="checkbox"] {
@@ -281,33 +285,6 @@ input[type="checkbox"] {
   margin-bottom: 14px;
   color: var(--muted);
   line-height: 1.6;
-}
-
-.defaults {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.defaults h3 {
-  margin-bottom: 10px;
-  font-size: 15px;
-}
-
-dl {
-  display: grid;
-  gap: 8px;
-}
-
-dl div {
-  display: grid;
-  gap: 4px;
-}
-
-dd {
-  margin: 0;
-  color: var(--text);
-  word-break: break-all;
 }
 
 .hint {

@@ -36,11 +36,6 @@ const elements = {
   controlMode: document.querySelector("#controlMode"),
   copyConfigPanel: document.querySelector("#copyConfigPanel"),
   pasteConfigPanel: document.querySelector("#pasteConfigPanel"),
-  defaultSyncFile: document.querySelector("#defaultSyncFile"),
-  defaultSourceFile: document.querySelector("#defaultSourceFile"),
-  defaultCopyPollMs: document.querySelector("#defaultCopyPollMs"),
-  defaultPastePollMs: document.querySelector("#defaultPastePollMs"),
-  defaultHeartbeatMs: document.querySelector("#defaultHeartbeatMs"),
   saveMessage: document.querySelector("#saveMessage"),
   logs: document.querySelector("#logs"),
   saveConfigButton: document.querySelector("#saveConfigButton"),
@@ -72,14 +67,12 @@ const renderStatus = (config, runtime) => {
 };
 
 const renderDefaults = (defaults) => {
-  state.defaults = defaults;
-  elements.defaultSyncFile.textContent = defaults.syncFile;
-  elements.defaultSourceFile.textContent = defaults.sourceFile;
-  elements.defaultCopyPollMs.textContent = defaults.copyPollMs;
-  elements.defaultPastePollMs.textContent = defaults.pastePollMs;
-  elements.defaultHeartbeatMs.textContent = defaults.heartbeatMs;
-  elements.syncFile.placeholder = defaults.syncFile;
-  elements.sourceFile.placeholder = defaults.sourceFile;
+  state.defaults = { ...FALLBACK_DEFAULTS, ...(defaults ?? {}) };
+  elements.syncFile.placeholder = state.defaults.syncFile;
+  elements.sourceFile.placeholder = state.defaults.sourceFile;
+  elements.copyPollMs.placeholder = String(state.defaults.copyPollMs);
+  elements.pastePollMs.placeholder = String(state.defaults.pastePollMs);
+  elements.heartbeatMs.placeholder = String(state.defaults.heartbeatMs);
 };
 
 const renderConfig = (config) => {
@@ -214,7 +207,7 @@ if (isBridgeReady) {
   });
 
   bridge.onLogEntry((entry) => {
-    state.logs = [...state.logs, entry].slice(-100);
+    state.logs = [...state.logs, entry];
     renderLogs();
   });
 }

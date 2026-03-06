@@ -12,7 +12,6 @@ import {
 } from "../lib/paste-sync.js";
 
 const APP_NAME = "citrix-clip-bridge";
-const MAX_LOG_ENTRIES = 100;
 const START_HIDDEN_ARG = "--hidden";
 const RUN_MODE_COPY = "copy";
 const RUN_MODE_PASTE = "paste";
@@ -143,7 +142,7 @@ function appendLog(entry) {
     ...entry,
   };
 
-  logEntries = [...logEntries, normalizedEntry].slice(-MAX_LOG_ENTRIES);
+  logEntries = [...logEntries, normalizedEntry];
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send("log:entry", normalizedEntry);
   }
