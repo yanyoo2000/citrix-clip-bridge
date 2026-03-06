@@ -2,10 +2,18 @@ const MODE_LABELS = {
   copy: "Copy",
   paste: "Paste",
 };
+const FALLBACK_DEFAULTS = {
+  syncFile: "C:\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt",
+  sourceFile: "\\\\Client\\C$\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt",
+  copyPollMs: 500,
+  pastePollMs: 500,
+  heartbeatMs: 5000,
+};
 
 const state = {
   logs: [],
   savedConfig: null,
+  defaults: null,
 };
 
 const elements = {
@@ -58,11 +66,14 @@ const renderStatus = (config, runtime) => {
 };
 
 const renderDefaults = (defaults) => {
+  state.defaults = defaults;
   elements.defaultSyncFile.textContent = defaults.syncFile;
   elements.defaultSourceFile.textContent = defaults.sourceFile;
   elements.defaultCopyPollMs.textContent = defaults.copyPollMs;
   elements.defaultPastePollMs.textContent = defaults.pastePollMs;
   elements.defaultHeartbeatMs.textContent = defaults.heartbeatMs;
+  elements.syncFile.placeholder = defaults.syncFile;
+  elements.sourceFile.placeholder = defaults.sourceFile;
 };
 
 const renderConfig = (config) => {
@@ -114,15 +125,26 @@ const renderSnapshot = (snapshot) => {
   renderLogs();
 };
 
-const readConfigForm = () => ({
-  runMode: getSelectedMode(),
-  syncFile: elements.syncFile.value.trim(),
-  sourceFile: elements.sourceFile.value.trim(),
-  copyPollMs: Number(elements.copyPollMs.value),
-  pastePollMs: Number(elements.pastePollMs.value),
-  heartbeatMs: Number(elements.heartbeatMs.value),
-  launchAtLogin: elements.launchAtLogin.checked,
-});
+const toNumberOrFallback = (value, fallback) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+};
+
+const readConfigForm = () => {
+  const defaults = { ...FALLBACK_DEFAULTS, ...(state.defaults ?? {}) };
+  const syncFile = elements.syncFile.value.trim();
+  const sourceFile = elements.sourceFile.value.trim();
+
+  return {
+    runMode: getSelectedMode(),
+    syncFile: syncFile || defaults.syncFile || "",
+    sourceFile: sourceFile || defaults.sourceFile || "",
+    copyPollMs: toNumberOrFallback(elements.copyPollMs.value, defaults.copyPollMs),
+    pastePollMs: toNumberOrFallback(elements.pastePollMs.value, defaults.pastePollMs),
+    heartbeatMs: toNumberOrFallback(elements.heartbeatMs.value, defaults.heartbeatMs),
+    launchAtLogin: elements.launchAtLogin.checked,
+  };
+};
 
 const showMessage = (message, isError = false) => {
   elements.saveMessage.textContent = message;

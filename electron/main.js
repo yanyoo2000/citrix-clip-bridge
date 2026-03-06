@@ -4,13 +4,11 @@ import path from "path";
 import {
   createClipboardToFileSync,
   DEFAULT_COPY_POLL_MS,
-  DEFAULT_SYNC_FILE,
 } from "../lib/copy-sync.js";
 import {
   createFileToClipboardSync,
   DEFAULT_HEARTBEAT_MS,
   DEFAULT_PASTE_POLL_MS,
-  DEFAULT_SOURCE_FILE,
 } from "../lib/paste-sync.js";
 
 const APP_NAME = "citrix-clip-bridge";
@@ -18,14 +16,16 @@ const MAX_LOG_ENTRIES = 100;
 const START_HIDDEN_ARG = "--hidden";
 const RUN_MODE_COPY = "copy";
 const RUN_MODE_PASTE = "paste";
+const DEFAULT_UI_SYNC_FILE = "C:\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt";
+const DEFAULT_UI_SOURCE_FILE = "\\\\Client\\C$\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt";
 const MODE_LABELS = {
   [RUN_MODE_COPY]: "Copy",
   [RUN_MODE_PASTE]: "Paste",
 };
 const uiDefaults = {
   runMode: RUN_MODE_COPY,
-  syncFile: "C:\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt",
-  sourceFile: "\\\\Client\\C$\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt",
+  syncFile: DEFAULT_UI_SYNC_FILE,
+  sourceFile: DEFAULT_UI_SOURCE_FILE,
   copyPollMs: DEFAULT_COPY_POLL_MS,
   pastePollMs: DEFAULT_PASTE_POLL_MS,
   heartbeatMs: DEFAULT_HEARTBEAT_MS,
@@ -155,8 +155,8 @@ const getSnapshot = () => ({
   logs: logEntries,
   defaults: {
     runMode: RUN_MODE_COPY,
-    syncFile: DEFAULT_SYNC_FILE,
-    sourceFile: DEFAULT_SOURCE_FILE,
+    syncFile: DEFAULT_UI_SYNC_FILE,
+    sourceFile: DEFAULT_UI_SOURCE_FILE,
     copyPollMs: DEFAULT_COPY_POLL_MS,
     pastePollMs: DEFAULT_PASTE_POLL_MS,
     heartbeatMs: DEFAULT_HEARTBEAT_MS,
@@ -287,10 +287,10 @@ const showWindow = () => {
 const createWindow = () => {
   const startHidden = shouldStartHidden();
   mainWindow = new BrowserWindow({
-    width: 960,
-    height: 720,
-    minWidth: 860,
-    minHeight: 620,
+    width: 1280,
+    height: 860,
+    minWidth: 1080,
+    minHeight: 760,
     show: !startHidden,
     title: APP_NAME,
     backgroundColor: "#0d1117",

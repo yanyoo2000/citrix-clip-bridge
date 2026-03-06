@@ -17,7 +17,7 @@
           <p class="eyebrow">Citrix Clipboard Bridge</p>
           <h1>citrix-clip-bridge</h1>
           <p class="hero-copy">
-            用托盘常驻方式运行单一同步模式。每次只选择 Copy 或 Paste 其中一种，避免双向同时启动。
+            单模式运行，日志主视图。每次只选择 Copy 或 Paste 其中一种，避免双向同时启动。
           </p>
           <p class="hero-runtime">当前状态：<strong id="appState">Copy 模式已停止</strong></p>
         </div>
@@ -34,7 +34,7 @@
       </header>
 
       <main class="grid">
-        <section class="panel">
+        <section class="panel panel-config">
           <div class="panel-head">
             <h2>同步配置</h2>
             <button id="saveConfigButton" class="button primary">保存配置</button>
@@ -91,7 +91,7 @@
           <p id="saveMessage" class="hint">修改后保存，运行中的服务会按新配置重建。</p>
         </section>
 
-        <section class="panel">
+        <section class="panel panel-control">
           <div class="panel-head">
             <h2>运行控制</h2>
           </div>
@@ -117,7 +117,7 @@
           </div>
         </section>
 
-        <section class="panel logs">
+        <section class="panel logs panel-logs">
           <div class="panel-head">
             <h2>最近 100 条日志</h2>
             <button id="clearLogsButton" class="button ghost">清空日志缓冲</button>
