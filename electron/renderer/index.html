@@ -13,23 +13,11 @@
   <body>
     <div class="shell">
       <header class="hero">
-        <div>
-          <p class="eyebrow">Citrix Clipboard Bridge</p>
-          <h1>citrix-clip-bridge</h1>
-          <p class="hero-copy">
-            单模式运行，日志主视图。每次只选择 Copy 或 Paste 其中一种，避免双向同时启动。
-          </p>
-          <p class="hero-runtime">当前状态：<strong id="appState">Copy 模式已停止</strong></p>
-        </div>
-        <div class="hero-status">
-          <div class="status-tile">
-            <span>运行模式</span>
-            <strong id="selectedMode">Copy</strong>
-          </div>
-          <div class="status-tile">
-            <span>运行状态</span>
-            <strong id="modeState">已停止</strong>
-          </div>
+        <p class="hero-brand">citrix-clip-bridge</p>
+        <div class="hero-summary">
+          <span class="hero-chip">模式 <strong id="selectedMode">Copy</strong></span>
+          <span class="hero-chip">状态 <strong id="modeState">已停止</strong></span>
+          <span id="appState" class="hero-text">Copy 模式已停止</span>
         </div>
       </header>
 

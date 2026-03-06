@@ -15,6 +15,12 @@ const state = {
   savedConfig: null,
   defaults: null,
 };
+const bridge = window.bridge;
+const isBridgeReady =
+  bridge &&
+  typeof bridge.getState === "function" &&
+  typeof bridge.saveConfig === "function" &&
+  typeof bridge.onStateChanged === "function";
 
 const elements = {
   runModeInputs: Array.from(document.querySelectorAll('input[name="runMode"]')),
@@ -152,6 +158,11 @@ const showMessage = (message, isError = false) => {
 };
 
 const withAction = async (action, successMessage) => {
+  if (!isBridgeReady) {
+    showMessage("Bridge API 不可用：请通过 Electron 启动应用（npm start），不要直接打开 index.html", true);
+    return;
+  }
+
   try {
     const snapshot = await action();
     renderSnapshot(snapshot);
@@ -166,28 +177,28 @@ const withAction = async (action, successMessage) => {
 elements.saveConfigButton.addEventListener("click", () => {
   const nextConfig = readConfigForm();
   const modeLabel = MODE_LABELS[nextConfig.runMode] ?? "Copy";
-  withAction(() => window.bridge.saveConfig(nextConfig), `配置已保存，当前模式为 ${modeLabel}`);
+  withAction(() => bridge.saveConfig(nextConfig), `配置已保存，当前模式为 ${modeLabel}`);
 });
 
 elements.startSelectedButton.addEventListener("click", () => {
   const modeLabel = MODE_LABELS[state.savedConfig?.runMode] ?? "Copy";
-  withAction(() => window.bridge.startSelected(), `${modeLabel} 已启动`);
+  withAction(() => bridge.startSelected(), `${modeLabel} 已启动`);
 });
 
 elements.stopSelectedButton.addEventListener("click", () => {
   const modeLabel = MODE_LABELS[state.savedConfig?.runMode] ?? "Copy";
-  withAction(() => window.bridge.stopSelected(), `${modeLabel} 已停止`);
+  withAction(() => bridge.stopSelected(), `${modeLabel} 已停止`);
 });
 
 elements.launchAtLogin.addEventListener("change", () => {
   withAction(
-    () => window.bridge.setLaunchAtLogin(elements.launchAtLogin.checked),
+    () => bridge.setLaunchAtLogin(elements.launchAtLogin.checked),
     `开机自启动已${elements.launchAtLogin.checked ? "开启" : "关闭"}`
   );
 });
 
 elements.clearLogsButton.addEventListener("click", () => {
-  withAction(() => window.bridge.clearLogs(), "日志缓冲已清空");
+  withAction(() => bridge.clearLogs(), "日志缓冲已清空");
 });
 
 elements.runModeInputs.forEach((input) => {
@@ -197,18 +208,37 @@ elements.runModeInputs.forEach((input) => {
   });
 });
 
-window.bridge.onStateChanged((snapshot) => {
-  renderSnapshot(snapshot);
-});
+if (isBridgeReady) {
+  bridge.onStateChanged((snapshot) => {
+    renderSnapshot(snapshot);
+  });
 
-window.bridge.onLogEntry((entry) => {
-  state.logs = [...state.logs, entry].slice(-100);
-  renderLogs();
-});
+  bridge.onLogEntry((entry) => {
+    state.logs = [...state.logs, entry].slice(-100);
+    renderLogs();
+  });
+}
 
 window.addEventListener("DOMContentLoaded", async () => {
+  if (!isBridgeReady) {
+    renderDefaults(FALLBACK_DEFAULTS);
+    renderConfig({
+      runMode: "copy",
+      syncFile: FALLBACK_DEFAULTS.syncFile,
+      sourceFile: FALLBACK_DEFAULTS.sourceFile,
+      copyPollMs: FALLBACK_DEFAULTS.copyPollMs,
+      pastePollMs: FALLBACK_DEFAULTS.pastePollMs,
+      heartbeatMs: FALLBACK_DEFAULTS.heartbeatMs,
+      launchAtLogin: false,
+    });
+    renderStatus({ runMode: "copy" }, { isRunning: false });
+    renderLogs();
+    showMessage("Bridge API 不可用：请通过 Electron 启动应用（npm start），不要直接打开 index.html", true);
+    return;
+  }
+
   try {
-    const snapshot = await window.bridge.getState();
+    const snapshot = await bridge.getState();
     renderSnapshot(snapshot);
     showMessage("每次只能运行一种模式，切换模式后请先保存配置");
   } catch (error) {
