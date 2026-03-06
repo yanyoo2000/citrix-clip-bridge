@@ -16,11 +16,21 @@ const state = {
   defaults: null,
 };
 const bridge = window.bridge;
-const isBridgeReady =
-  bridge &&
-  typeof bridge.getState === "function" &&
-  typeof bridge.saveConfig === "function" &&
-  typeof bridge.onStateChanged === "function";
+const REQUIRED_BRIDGE_METHODS = [
+  "getState",
+  "saveConfig",
+  "startSelected",
+  "stopSelected",
+  "clearLogs",
+  "setLaunchAtLogin",
+];
+
+const missingRequiredBridgeMethods = REQUIRED_BRIDGE_METHODS.filter(
+  (method) => typeof bridge?.[method] !== "function"
+);
+const isBridgeReady = missingRequiredBridgeMethods.length === 0;
+const supportsStateSubscription = typeof bridge?.onStateChanged === "function";
+const supportsLogSubscription = typeof bridge?.onLogEntry === "function";
 
 const elements = {
   runModeInputs: Array.from(document.querySelectorAll('input[name="runMode"]')),
@@ -33,7 +43,6 @@ const elements = {
   appState: document.querySelector("#appState"),
   selectedMode: document.querySelector("#selectedMode"),
   modeState: document.querySelector("#modeState"),
-  controlMode: document.querySelector("#controlMode"),
   copyConfigPanel: document.querySelector("#copyConfigPanel"),
   pasteConfigPanel: document.querySelector("#pasteConfigPanel"),
   saveMessage: document.querySelector("#saveMessage"),
@@ -59,9 +68,6 @@ const renderStatus = (config, runtime) => {
   elements.appState.textContent = `${modeLabel} 模式${isRunning ? "运行中" : "已停止"}`;
   elements.selectedMode.textContent = modeLabel;
   elements.modeState.textContent = isRunning ? "运行中" : "已停止";
-  elements.controlMode.textContent = modeLabel;
-  elements.startSelectedButton.textContent = `启动 ${modeLabel}`;
-  elements.stopSelectedButton.textContent = `停止 ${modeLabel}`;
   elements.startSelectedButton.disabled = isRunning;
   elements.stopSelectedButton.disabled = !isRunning;
 };
@@ -152,7 +158,13 @@ const showMessage = (message, isError = false) => {
 
 const withAction = async (action, successMessage) => {
   if (!isBridgeReady) {
-    showMessage("Bridge API 不可用：请通过 Electron 启动应用（npm start），不要直接打开 index.html", true);
+    const detail = missingRequiredBridgeMethods.length
+      ? `缺少方法: ${missingRequiredBridgeMethods.join(", ")}`
+      : "bridge 未注入";
+    showMessage(
+      `Bridge API 不可用（${detail}）。请通过 Electron 启动应用（npm start），不要直接打开 index.html`,
+      true
+    );
     return;
   }
 
@@ -201,11 +213,13 @@ elements.runModeInputs.forEach((input) => {
   });
 });
 
-if (isBridgeReady) {
+if (isBridgeReady && supportsStateSubscription) {
   bridge.onStateChanged((snapshot) => {
     renderSnapshot(snapshot);
   });
+}
 
+if (isBridgeReady && supportsLogSubscription) {
   bridge.onLogEntry((entry) => {
     state.logs = [...state.logs, entry];
     renderLogs();
@@ -226,7 +240,13 @@ window.addEventListener("DOMContentLoaded", async () => {
     });
     renderStatus({ runMode: "copy" }, { isRunning: false });
     renderLogs();
-    showMessage("Bridge API 不可用：请通过 Electron 启动应用（npm start），不要直接打开 index.html", true);
+    const detail = missingRequiredBridgeMethods.length
+      ? `缺少方法: ${missingRequiredBridgeMethods.join(", ")}`
+      : "bridge 未注入";
+    showMessage(
+      `Bridge API 不可用（${detail}）。请通过 Electron 启动应用（npm start），不要直接打开 index.html`,
+      true
+    );
     return;
   }
 

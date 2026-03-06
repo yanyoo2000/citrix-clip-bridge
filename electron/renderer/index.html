@@ -14,10 +14,16 @@
     <div class="shell">
       <header class="hero">
         <p class="hero-brand">citrix-clip-bridge</p>
-        <div class="hero-summary">
-          <span class="hero-chip">模式 <strong id="selectedMode">Copy</strong></span>
-          <span class="hero-chip">状态 <strong id="modeState">已停止</strong></span>
-          <span id="appState" class="hero-text">Copy 模式已停止</span>
+        <div class="hero-right">
+          <div class="hero-summary">
+            <span class="hero-chip">模式 <strong id="selectedMode">Copy</strong></span>
+            <span class="hero-chip">状态 <strong id="modeState">已停止</strong></span>
+            <span id="appState" class="hero-text">Copy 模式已停止</span>
+          </div>
+          <div class="hero-actions">
+            <button id="startSelectedButton" class="button primary button-compact">启动</button>
+            <button id="stopSelectedButton" class="button secondary button-compact">停止</button>
+          </div>
         </div>
       </header>
 
@@ -77,21 +83,6 @@
           </label>
 
           <p id="saveMessage" class="hint">修改后保存，运行中的服务会按新配置重建。</p>
-        </section>
-
-        <section class="panel panel-control">
-          <div class="panel-head">
-            <h2>运行控制</h2>
-          </div>
-
-          <p class="control-copy">
-            当前只允许一个运行模式。请先保存配置，然后启动 <strong id="controlMode">Copy</strong>。
-          </p>
-
-          <div class="action-row">
-            <button id="startSelectedButton" class="button primary">启动 Copy</button>
-            <button id="stopSelectedButton" class="button secondary">停止 Copy</button>
-          </div>
         </section>
 
         <section class="panel logs panel-logs">
