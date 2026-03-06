@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>citrix-clip-bridge</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Citrix Clipboard Bridge</p>
+          <h1>citrix-clip-bridge</h1>
+          <p class="hero-copy">
+            用托盘常驻方式管理 copy / paste 两条同步链路，直接查看当前配置、运行状态和最近日志。
+          </p>
+          <p class="hero-runtime">当前状态：<strong id="appState">全部已停止</strong></p>
+        </div>
+        <div class="hero-status">
+          <div class="status-tile">
+            <span>Copy</span>
+            <strong id="copyState">已停止</strong>
+          </div>
+          <div class="status-tile">
+            <span>Paste</span>
+            <strong id="pasteState">已停止</strong>
+          </div>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="panel">
+          <div class="panel-head">
+            <h2>同步配置</h2>
+            <button id="saveConfigButton" class="button primary">保存配置</button>
+          </div>
+
+          <label class="field">
+            <span>SYNC_FILE</span>
+            <input id="syncFile" type="text" placeholder="写入端目标文件" />
+          </label>
+
+          <label class="field">
+            <span>SOURCE_FILE</span>
+            <input id="sourceFile" type="text" placeholder="读取端源文件" />
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>COPY_POLL_MS</span>
+              <input id="copyPollMs" type="number" min="50" step="50" />
+            </label>
+            <label class="field">
+              <span>PASTE_POLL_MS</span>
+              <input id="pastePollMs" type="number" min="50" step="50" />
+            </label>
+            <label class="field">
+              <span>HEARTBEAT_MS</span>
+              <input id="heartbeatMs" type="number" min="1000" step="500" />
+            </label>
+          </div>
+
+          <label class="toggle">
+            <input id="launchAtLogin" type="checkbox" />
+            <span>开机自启动</span>
+          </label>
+
+          <p id="saveMessage" class="hint">修改后保存，运行中的服务会按新配置重建。</p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h2>运行控制</h2>
+          </div>
+
+          <div class="action-row">
+            <button id="startAllButton" class="button primary">一键启动全部</button>
+            <button id="stopAllButton" class="button secondary">一键停止全部</button>
+          </div>
+
+          <div class="action-grid">
+            <button id="startCopyButton" class="button primary">启动 Copy</button>
+            <button id="stopCopyButton" class="button secondary">停止 Copy</button>
+            <button id="startPasteButton" class="button primary">启动 Paste</button>
+            <button id="stopPasteButton" class="button secondary">停止 Paste</button>
+          </div>
+
+          <div class="defaults">
+            <h3>CLI 默认值</h3>
+            <dl>
+              <div><dt>SYNC_FILE</dt><dd id="defaultSyncFile"></dd></div>
+              <div><dt>SOURCE_FILE</dt><dd id="defaultSourceFile"></dd></div>
+              <div><dt>COPY_POLL_MS</dt><dd id="defaultCopyPollMs"></dd></div>
+              <div><dt>PASTE_POLL_MS</dt><dd id="defaultPastePollMs"></dd></div>
+              <div><dt>HEARTBEAT_MS</dt><dd id="defaultHeartbeatMs"></dd></div>
+            </dl>
+          </div>
+        </section>
+
+        <section class="panel logs">
+          <div class="panel-head">
+            <h2>最近 100 条日志</h2>
+            <button id="clearLogsButton" class="button ghost">清空日志缓冲</button>
+          </div>
+          <div id="logs" class="log-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+  </html>

@@ -6,7 +6,12 @@
 
 ## 工作原理
 
-项目包含两个核心脚本：
+项目现在包含两种运行方式：
+
+- CLI：继续保留原来的 `copy.js` / `paste.js`
+- Electron UI：一个原生 `index.html + 少量原生 JS` 的桌面壳，用来配置、启动、托盘常驻和看日志
+
+CLI 模式下包含两个核心脚本：
 
 - `copy.js`：监听当前环境的剪贴板，把文本变化写入同步文件
 - `paste.js`：监听同步文件，把文件变化写回当前环境的剪贴板
@@ -33,6 +38,25 @@
 ```bash
 npm install
 ```
+
+## Electron UI
+
+启动桌面版：
+
+```bash
+npm start
+```
+
+第一版 UI 提供这些能力：
+
+- 配置 `SYNC_FILE` / `SOURCE_FILE`
+- 配置 `COPY_POLL_MS` / `PASTE_POLL_MS` / `HEARTBEAT_MS`
+- 一键启动/停止全部同步，也可以单独启动/停止 copy 或 paste
+- 托盘显示运行状态，关闭窗口后继续常驻
+- 查看最近 100 条日志
+- 开机自启动开关
+
+配置会保存在 Electron 的 `userData/config.json` 中。窗口关闭时不会退出进程，而是最小化到托盘。
 
 ## 使用方法
 
@@ -65,6 +89,20 @@ paste.bat
 ```
 
 通常是两边各运行一个脚本，共同组成完整的桥接链路。
+
+### 打包桌面版
+
+产出当前平台目录包：
+
+```bash
+npm run dist:dir
+```
+
+打 Windows 安装包：
+
+```bash
+npm run dist:win
+```
 
 ## 环境变量
 
