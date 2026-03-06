@@ -1,8 +1,15 @@
+const MODE_LABELS = {
+  copy: "Copy",
+  paste: "Paste",
+};
+
 const state = {
   logs: [],
+  savedConfig: null,
 };
 
 const elements = {
+  runModeInputs: Array.from(document.querySelectorAll('input[name="runMode"]')),
   syncFile: document.querySelector("#syncFile"),
   sourceFile: document.querySelector("#sourceFile"),
   copyPollMs: document.querySelector("#copyPollMs"),
@@ -10,8 +17,11 @@ const elements = {
   heartbeatMs: document.querySelector("#heartbeatMs"),
   launchAtLogin: document.querySelector("#launchAtLogin"),
   appState: document.querySelector("#appState"),
-  copyState: document.querySelector("#copyState"),
-  pasteState: document.querySelector("#pasteState"),
+  selectedMode: document.querySelector("#selectedMode"),
+  modeState: document.querySelector("#modeState"),
+  controlMode: document.querySelector("#controlMode"),
+  copyConfigPanel: document.querySelector("#copyConfigPanel"),
+  pasteConfigPanel: document.querySelector("#pasteConfigPanel"),
   defaultSyncFile: document.querySelector("#defaultSyncFile"),
   defaultSourceFile: document.querySelector("#defaultSourceFile"),
   defaultCopyPollMs: document.querySelector("#defaultCopyPollMs"),
@@ -20,29 +30,31 @@ const elements = {
   saveMessage: document.querySelector("#saveMessage"),
   logs: document.querySelector("#logs"),
   saveConfigButton: document.querySelector("#saveConfigButton"),
-  startAllButton: document.querySelector("#startAllButton"),
-  stopAllButton: document.querySelector("#stopAllButton"),
-  startCopyButton: document.querySelector("#startCopyButton"),
-  stopCopyButton: document.querySelector("#stopCopyButton"),
-  startPasteButton: document.querySelector("#startPasteButton"),
-  stopPasteButton: document.querySelector("#stopPasteButton"),
+  startSelectedButton: document.querySelector("#startSelectedButton"),
+  stopSelectedButton: document.querySelector("#stopSelectedButton"),
   clearLogsButton: document.querySelector("#clearLogsButton"),
 };
 
-const renderStatus = (runtime) => {
-  const allRunning = runtime.copyRunning && runtime.pasteRunning;
-  const anyRunning = runtime.copyRunning || runtime.pasteRunning;
+const getSelectedMode = () =>
+  elements.runModeInputs.find((input) => input.checked)?.value ?? "copy";
 
-  elements.appState.textContent = allRunning ? "双向同步中" : anyRunning ? "部分运行中" : "全部已停止";
-  elements.copyState.textContent = runtime.copyRunning ? "运行中" : "已停止";
-  elements.pasteState.textContent = runtime.pasteRunning ? "运行中" : "已停止";
+const toggleModePanels = (mode) => {
+  elements.copyConfigPanel.hidden = mode !== "copy";
+  elements.pasteConfigPanel.hidden = mode !== "paste";
+};
 
-  elements.startAllButton.disabled = allRunning;
-  elements.stopAllButton.disabled = !anyRunning;
-  elements.startCopyButton.disabled = runtime.copyRunning;
-  elements.stopCopyButton.disabled = !runtime.copyRunning;
-  elements.startPasteButton.disabled = runtime.pasteRunning;
-  elements.stopPasteButton.disabled = !runtime.pasteRunning;
+const renderStatus = (config, runtime) => {
+  const modeLabel = MODE_LABELS[config.runMode] ?? "Copy";
+  const isRunning = Boolean(runtime.isRunning);
+
+  elements.appState.textContent = `${modeLabel} 模式${isRunning ? "运行中" : "已停止"}`;
+  elements.selectedMode.textContent = modeLabel;
+  elements.modeState.textContent = isRunning ? "运行中" : "已停止";
+  elements.controlMode.textContent = modeLabel;
+  elements.startSelectedButton.textContent = `启动 ${modeLabel}`;
+  elements.stopSelectedButton.textContent = `停止 ${modeLabel}`;
+  elements.startSelectedButton.disabled = isRunning;
+  elements.stopSelectedButton.disabled = !isRunning;
 };
 
 const renderDefaults = (defaults) => {
@@ -54,12 +66,17 @@ const renderDefaults = (defaults) => {
 };
 
 const renderConfig = (config) => {
+  state.savedConfig = config;
+  elements.runModeInputs.forEach((input) => {
+    input.checked = input.value === config.runMode;
+  });
   elements.syncFile.value = config.syncFile ?? "";
   elements.sourceFile.value = config.sourceFile ?? "";
   elements.copyPollMs.value = config.copyPollMs ?? "";
   elements.pastePollMs.value = config.pastePollMs ?? "";
   elements.heartbeatMs.value = config.heartbeatMs ?? "";
   elements.launchAtLogin.checked = Boolean(config.launchAtLogin);
+  toggleModePanels(config.runMode);
 };
 
 const formatTime = (value) => {
@@ -91,13 +108,14 @@ const renderLogs = () => {
 
 const renderSnapshot = (snapshot) => {
   renderConfig(snapshot.config);
-  renderStatus(snapshot.runtime);
+  renderStatus(snapshot.config, snapshot.runtime);
   renderDefaults(snapshot.defaults);
   state.logs = snapshot.logs ?? [];
   renderLogs();
 };
 
 const readConfigForm = () => ({
+  runMode: getSelectedMode(),
   syncFile: elements.syncFile.value.trim(),
   sourceFile: elements.sourceFile.value.trim(),
   copyPollMs: Number(elements.copyPollMs.value),
@@ -125,31 +143,18 @@ const withAction = async (action, successMessage) => {
 
 elements.saveConfigButton.addEventListener("click", () => {
   const nextConfig = readConfigForm();
-  withAction(() => window.bridge.saveConfig(nextConfig), "配置已保存");
+  const modeLabel = MODE_LABELS[nextConfig.runMode] ?? "Copy";
+  withAction(() => window.bridge.saveConfig(nextConfig), `配置已保存，当前模式为 ${modeLabel}`);
 });
 
-elements.startAllButton.addEventListener("click", () => {
-  withAction(() => window.bridge.startAll(), "Copy / Paste 已全部启动");
+elements.startSelectedButton.addEventListener("click", () => {
+  const modeLabel = MODE_LABELS[state.savedConfig?.runMode] ?? "Copy";
+  withAction(() => window.bridge.startSelected(), `${modeLabel} 已启动`);
 });
 
-elements.stopAllButton.addEventListener("click", () => {
-  withAction(() => window.bridge.stopAll(), "Copy / Paste 已全部停止");
-});
-
-elements.startCopyButton.addEventListener("click", () => {
-  withAction(() => window.bridge.startCopy(), "Copy 已启动");
-});
-
-elements.stopCopyButton.addEventListener("click", () => {
-  withAction(() => window.bridge.stopCopy(), "Copy 已停止");
-});
-
-elements.startPasteButton.addEventListener("click", () => {
-  withAction(() => window.bridge.startPaste(), "Paste 已启动");
-});
-
-elements.stopPasteButton.addEventListener("click", () => {
-  withAction(() => window.bridge.stopPaste(), "Paste 已停止");
+elements.stopSelectedButton.addEventListener("click", () => {
+  const modeLabel = MODE_LABELS[state.savedConfig?.runMode] ?? "Copy";
+  withAction(() => window.bridge.stopSelected(), `${modeLabel} 已停止`);
 });
 
 elements.launchAtLogin.addEventListener("change", () => {
@@ -161,6 +166,13 @@ elements.launchAtLogin.addEventListener("change", () => {
 
 elements.clearLogsButton.addEventListener("click", () => {
   withAction(() => window.bridge.clearLogs(), "日志缓冲已清空");
+});
+
+elements.runModeInputs.forEach((input) => {
+  input.addEventListener("change", () => {
+    toggleModePanels(getSelectedMode());
+    showMessage("模式已切换，保存后生效");
+  });
 });
 
 window.bridge.onStateChanged((snapshot) => {
@@ -176,7 +188,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   try {
     const snapshot = await window.bridge.getState();
     renderSnapshot(snapshot);
-    showMessage("配置修改后会立即同步到后台");
+    showMessage("每次只能运行一种模式，切换模式后请先保存配置");
   } catch (error) {
     showMessage(`初始化失败: ${error.message}`, true);
   }

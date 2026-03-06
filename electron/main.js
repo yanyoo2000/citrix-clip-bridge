@@ -16,7 +16,14 @@ import {
 const APP_NAME = "citrix-clip-bridge";
 const MAX_LOG_ENTRIES = 100;
 const START_HIDDEN_ARG = "--hidden";
+const RUN_MODE_COPY = "copy";
+const RUN_MODE_PASTE = "paste";
+const MODE_LABELS = {
+  [RUN_MODE_COPY]: "Copy",
+  [RUN_MODE_PASTE]: "Paste",
+};
 const uiDefaults = {
+  runMode: RUN_MODE_COPY,
   syncFile: "C:\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt",
   sourceFile: "\\\\Client\\C$\\Users\\Public\\Documents\\clipboard-sync\\clipboard.txt",
   copyPollMs: DEFAULT_COPY_POLL_MS,
@@ -41,7 +48,7 @@ const getConfigPath = () => path.join(app.getPath("userData"), "config.json");
 const shouldStartHidden = () => process.argv.includes(START_HIDDEN_ARG);
 
 const createTrayIcon = (state) => {
-  const color = state.copyRunning && state.pasteRunning ? "#17c964" : state.copyRunning || state.pasteRunning ? "#f5a524" : "#6c7480";
+  const color = state.isRunning ? "#17c964" : "#6c7480";
   const svg = `
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
       <rect x="1" y="1" width="14" height="14" rx="4" fill="#11161f"/>
@@ -83,6 +90,8 @@ const saveConfig = () => {
 
 const normalizeConfig = (rawConfig) => {
   const nextConfig = {
+    runMode:
+      rawConfig.runMode === RUN_MODE_PASTE ? RUN_MODE_PASTE : RUN_MODE_COPY,
     syncFile: String(rawConfig.syncFile ?? uiDefaults.syncFile).trim() || uiDefaults.syncFile,
     sourceFile:
       String(rawConfig.sourceFile ?? uiDefaults.sourceFile).trim() || uiDefaults.sourceFile,
@@ -105,10 +114,26 @@ const normalizeConfig = (rawConfig) => {
   return nextConfig;
 };
 
-const getRuntimeState = () => ({
-  copyRunning: copyService?.isRunning() ?? false,
-  pasteRunning: pasteService?.isRunning() ?? false,
-});
+const getActiveMode = () => {
+  if (copyService?.isRunning()) {
+    return RUN_MODE_COPY;
+  }
+
+  if (pasteService?.isRunning()) {
+    return RUN_MODE_PASTE;
+  }
+
+  return null;
+};
+
+const getRuntimeState = () => {
+  const activeMode = getActiveMode();
+  return {
+    runMode: config.runMode,
+    activeMode,
+    isRunning: Boolean(activeMode),
+  };
+};
 
 function appendLog(entry) {
   const normalizedEntry = {
@@ -129,6 +154,7 @@ const getSnapshot = () => ({
   runtime: getRuntimeState(),
   logs: logEntries,
   defaults: {
+    runMode: RUN_MODE_COPY,
     syncFile: DEFAULT_SYNC_FILE,
     sourceFile: DEFAULT_SOURCE_FILE,
     copyPollMs: DEFAULT_COPY_POLL_MS,
@@ -149,16 +175,25 @@ const clearLogs = () => {
   logEntries = [];
 };
 
-const rebuildServices = () => {
-  const copyWasRunning = copyService?.isRunning() ?? false;
-  const pasteWasRunning = pasteService?.isRunning() ?? false;
+const stopServices = () => {
+  copyService?.stop();
+  pasteService?.stop();
+};
 
-  if (copyWasRunning) {
-    copyService.stop();
+const startConfiguredMode = () => {
+  if (config.runMode === RUN_MODE_COPY) {
+    pasteService?.stop();
+    copyService.start();
+    return;
   }
-  if (pasteWasRunning) {
-    pasteService.stop();
-  }
+
+  copyService?.stop();
+  pasteService.start();
+};
+
+const rebuildServices = () => {
+  const wasRunning = Boolean(getActiveMode());
+  stopServices();
 
   copyService = createClipboardToFileSync({
     targetFile: config.syncFile,
@@ -173,11 +208,8 @@ const rebuildServices = () => {
     onLog: appendLog,
   });
 
-  if (copyWasRunning) {
-    copyService.start();
-  }
-  if (pasteWasRunning) {
-    pasteService.start();
+  if (wasRunning) {
+    startConfiguredMode();
   }
 };
 
@@ -205,43 +237,21 @@ const refreshTray = () => {
   const runtime = getRuntimeState();
   tray.setImage(createTrayIcon(runtime));
   tray.setToolTip(
-    `${APP_NAME} | copy:${runtime.copyRunning ? "on" : "off"} paste:${runtime.pasteRunning ? "on" : "off"}`
+    `${APP_NAME} | mode:${MODE_LABELS[config.runMode]} status:${runtime.isRunning ? "on" : "off"}`
   );
 
   const menu = Menu.buildFromTemplate([
     { label: "打开窗口", click: () => showWindow() },
+    { label: `当前模式: ${MODE_LABELS[config.runMode]}`, enabled: false },
     {
-      label: runtime.copyRunning && runtime.pasteRunning ? "停止全部" : "启动全部",
+      label: runtime.isRunning ? `停止 ${MODE_LABELS[config.runMode]}` : `启动 ${MODE_LABELS[config.runMode]}`,
       click: () => {
-        if (runtime.copyRunning && runtime.pasteRunning) {
-          stopAll();
+        if (runtime.isRunning) {
+          stopSelected();
           return;
         }
 
-        startAll();
-      },
-    },
-    { type: "separator" },
-    {
-      label: runtime.copyRunning ? "停止 Copy" : "启动 Copy",
-      click: () => {
-        if (runtime.copyRunning) {
-          stopCopy();
-          return;
-        }
-
-        startCopy();
-      },
-    },
-    {
-      label: runtime.pasteRunning ? "停止 Paste" : "启动 Paste",
-      click: () => {
-        if (runtime.pasteRunning) {
-          stopPaste();
-          return;
-        }
-
-        startPaste();
+        startSelected();
       },
     },
     { type: "separator" },
@@ -309,42 +319,18 @@ const createWindow = () => {
   });
 };
 
-const startCopy = () => {
-  copyService.start();
+const startSelected = () => {
+  startConfiguredMode();
   broadcastState();
   return getSnapshot();
 };
 
-const stopCopy = () => {
-  copyService.stop();
-  broadcastState();
-  return getSnapshot();
-};
-
-const startPaste = () => {
-  pasteService.start();
-  broadcastState();
-  return getSnapshot();
-};
-
-const stopPaste = () => {
-  pasteService.stop();
-  broadcastState();
-  return getSnapshot();
-};
-
-const startAll = () => {
-  copyService.start();
-  pasteService.start();
-  appendLog({ source: "app", level: "info", message: "Copy / Paste 已全部启动" });
-  broadcastState();
-  return getSnapshot();
-};
-
-const stopAll = () => {
-  copyService.stop();
-  pasteService.stop();
-  appendLog({ source: "app", level: "info", message: "Copy / Paste 已全部停止" });
+const stopSelected = () => {
+  if (config.runMode === RUN_MODE_COPY) {
+    copyService.stop();
+  } else {
+    pasteService.stop();
+  }
   broadcastState();
   return getSnapshot();
 };
@@ -370,28 +356,12 @@ const registerIpc = () => {
     return getSnapshot();
   });
 
-  ipcMain.handle("runtime:start-copy", () => {
-    return startCopy();
+  ipcMain.handle("runtime:start-selected", () => {
+    return startSelected();
   });
 
-  ipcMain.handle("runtime:stop-copy", () => {
-    return stopCopy();
-  });
-
-  ipcMain.handle("runtime:start-paste", () => {
-    return startPaste();
-  });
-
-  ipcMain.handle("runtime:stop-paste", () => {
-    return stopPaste();
-  });
-
-  ipcMain.handle("runtime:start-all", () => {
-    return startAll();
-  });
-
-  ipcMain.handle("runtime:stop-all", () => {
-    return stopAll();
+  ipcMain.handle("runtime:stop-selected", () => {
+    return stopSelected();
   });
 
   ipcMain.handle("app:set-launch-at-login", (_event, enabled) => {
@@ -437,8 +407,7 @@ app.on("second-instance", () => {
 
 app.on("before-quit", () => {
   isQuitting = true;
-  copyService?.stop();
-  pasteService?.stop();
+  stopServices();
 });
 
 process.on("uncaughtException", (error) => {

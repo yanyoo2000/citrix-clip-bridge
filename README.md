@@ -49,14 +49,15 @@ npm start
 
 第一版 UI 提供这些能力：
 
+- 在 `Copy` / `Paste` 两种模式之间二选一
 - 配置 `SYNC_FILE` / `SOURCE_FILE`
 - 配置 `COPY_POLL_MS` / `PASTE_POLL_MS` / `HEARTBEAT_MS`
-- 一键启动/停止全部同步，也可以单独启动/停止 copy 或 paste
+- 统一启动/停止当前选中的模式
 - 托盘显示运行状态，关闭窗口后继续常驻
 - 查看最近 100 条日志
 - 开机自启动开关
 
-配置会保存在 Electron 的 `userData/config.json` 中。窗口关闭时不会退出进程，而是最小化到托盘。
+配置会保存在 Electron 的 `userData/config.json` 中。窗口关闭时不会退出进程，而是最小化到托盘。桌面版每次只运行一种模式，不支持在同一个进程里同时启动 `copy` 和 `paste`。
 
 ## 使用方法
 

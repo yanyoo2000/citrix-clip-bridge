@@ -17,18 +17,18 @@
           <p class="eyebrow">Citrix Clipboard Bridge</p>
           <h1>citrix-clip-bridge</h1>
           <p class="hero-copy">
-            用托盘常驻方式管理 copy / paste 两条同步链路，直接查看当前配置、运行状态和最近日志。
+            用托盘常驻方式运行单一同步模式。每次只选择 Copy 或 Paste 其中一种，避免双向同时启动。
           </p>
-          <p class="hero-runtime">当前状态：<strong id="appState">全部已停止</strong></p>
+          <p class="hero-runtime">当前状态：<strong id="appState">Copy 模式已停止</strong></p>
         </div>
         <div class="hero-status">
           <div class="status-tile">
-            <span>Copy</span>
-            <strong id="copyState">已停止</strong>
+            <span>运行模式</span>
+            <strong id="selectedMode">Copy</strong>
           </div>
           <div class="status-tile">
-            <span>Paste</span>
-            <strong id="pasteState">已停止</strong>
+            <span>运行状态</span>
+            <strong id="modeState">已停止</strong>
           </div>
         </div>
       </header>
@@ -40,29 +40,47 @@
             <button id="saveConfigButton" class="button primary">保存配置</button>
           </div>
 
-          <label class="field">
-            <span>SYNC_FILE</span>
-            <input id="syncFile" type="text" placeholder="写入端目标文件" />
-          </label>
+          <div class="mode-picker">
+            <label class="mode-card">
+              <input type="radio" name="runMode" value="copy" />
+              <span class="mode-card-title">Copy 模式</span>
+              <span class="mode-card-copy">监听本机剪贴板并写入 SYNC_FILE</span>
+            </label>
+            <label class="mode-card">
+              <input type="radio" name="runMode" value="paste" />
+              <span class="mode-card-title">Paste 模式</span>
+              <span class="mode-card-copy">监听 SOURCE_FILE 并回写剪贴板</span>
+            </label>
+          </div>
 
-          <label class="field">
-            <span>SOURCE_FILE</span>
-            <input id="sourceFile" type="text" placeholder="读取端源文件" />
-          </label>
+          <div id="copyConfigPanel" class="mode-panel">
+            <label class="field">
+              <span>SYNC_FILE</span>
+              <input id="syncFile" type="text" placeholder="写入端目标文件" />
+            </label>
 
-          <div class="field-row">
             <label class="field">
               <span>COPY_POLL_MS</span>
-              <input id="copyPollMs" type="number" min="50" step="50" />
+              <input id="copyPollMs" type="number" min="50" step="50" placeholder="500" />
             </label>
+          </div>
+
+          <div id="pasteConfigPanel" class="mode-panel">
             <label class="field">
-              <span>PASTE_POLL_MS</span>
-              <input id="pastePollMs" type="number" min="50" step="50" />
+              <span>SOURCE_FILE</span>
+              <input id="sourceFile" type="text" placeholder="读取端源文件" />
             </label>
-            <label class="field">
-              <span>HEARTBEAT_MS</span>
-              <input id="heartbeatMs" type="number" min="1000" step="500" />
-            </label>
+
+            <div class="field-row">
+              <label class="field">
+                <span>PASTE_POLL_MS</span>
+                <input id="pastePollMs" type="number" min="50" step="50" placeholder="500" />
+              </label>
+              <label class="field">
+                <span>HEARTBEAT_MS</span>
+                <input id="heartbeatMs" type="number" min="1000" step="500" placeholder="5000" />
+              </label>
+            </div>
           </div>
 
           <label class="toggle">
@@ -78,20 +96,17 @@
             <h2>运行控制</h2>
           </div>
 
-          <div class="action-row">
-            <button id="startAllButton" class="button primary">一键启动全部</button>
-            <button id="stopAllButton" class="button secondary">一键停止全部</button>
-          </div>
+          <p class="control-copy">
+            当前只允许一个运行模式。请先保存配置，然后启动 <strong id="controlMode">Copy</strong>。
+          </p>
 
-          <div class="action-grid">
-            <button id="startCopyButton" class="button primary">启动 Copy</button>
-            <button id="stopCopyButton" class="button secondary">停止 Copy</button>
-            <button id="startPasteButton" class="button primary">启动 Paste</button>
-            <button id="stopPasteButton" class="button secondary">停止 Paste</button>
+          <div class="action-row">
+            <button id="startSelectedButton" class="button primary">启动 Copy</button>
+            <button id="stopSelectedButton" class="button secondary">停止 Copy</button>
           </div>
 
           <div class="defaults">
-            <h3>CLI 默认值</h3>
+            <h3>默认值参考</h3>
             <dl>
               <div><dt>SYNC_FILE</dt><dd id="defaultSyncFile"></dd></div>
               <div><dt>SOURCE_FILE</dt><dd id="defaultSourceFile"></dd></div>
