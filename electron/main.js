@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage } from "electron";
 import fs from "fs";
 import path from "path";
+import { fileURLToPath } from "url";
 import {
   createClipboardToFileSync,
   DEFAULT_COPY_POLL_MS,
@@ -38,6 +39,9 @@ let logEntries = [];
 let config = { ...uiDefaults };
 let copyService = null;
 let pasteService = null;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const PRELOAD_PATH = path.join(__dirname, "preload.js");
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
@@ -294,7 +298,7 @@ const createWindow = () => {
     title: APP_NAME,
     backgroundColor: "#0d1117",
     webPreferences: {
-      preload: path.join(app.getAppPath(), "electron", "preload.js"),
+      preload: PRELOAD_PATH,
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -378,6 +382,11 @@ const registerIpc = () => {
 app.whenReady().then(() => {
   config = loadConfig();
   config.launchAtLogin = app.getLoginItemSettings().openAtLogin;
+  appendLog({
+    source: "app",
+    level: "info",
+    message: `preload: ${PRELOAD_PATH} (${fs.existsSync(PRELOAD_PATH) ? "ok" : "missing"})`,
+  });
   rebuildServices();
   registerIpc();
   createWindow();
