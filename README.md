@@ -1,6 +1,6 @@
-# citrix-clip-bridge
+# citrix-sync-clipboard
 
-`citrix-clip-bridge` 是一个用于 Citrix 场景的剪贴板桥接工具。它通过一个共享文本文件，在本地 Windows 机器和 Citrix 会话之间同步剪贴板文本。
+`citrix-sync-clipboard` 是一个用于 Citrix 场景的剪贴板桥接工具。它通过一个共享文本文件，在本地 Windows 机器和 Citrix 会话之间同步剪贴板文本。
 
 这个工具适合用于 Citrix 原生剪贴板不稳定、不可用、延迟高，或者被策略限制的场景。一端负责监听剪贴板并写入文件，另一端负责监听文件并把内容写回本地剪贴板。
 

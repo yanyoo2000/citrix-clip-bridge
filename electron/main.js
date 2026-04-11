@@ -12,7 +12,7 @@ import {
   DEFAULT_PASTE_POLL_MS,
 } from "../lib/paste-sync.js";
 
-const APP_NAME = "citrix-clip-bridge";
+const APP_NAME = "citrix-sync-clipboard";
 const START_HIDDEN_ARG = "--hidden";
 const RUN_MODE_COPY = "copy";
 const RUN_MODE_PASTE = "paste";

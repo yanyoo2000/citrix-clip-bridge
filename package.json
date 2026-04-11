@@ -1,5 +1,5 @@
 {
-  "name": "citrix-clip-bridge",
+  "name": "citrix-sync-clipboard",
   "version": "1.0.0",
   "description": "Clipboard bridge for Citrix sessions using a shared text file.",
   "type": "module",
@@ -26,8 +26,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.yanyoo.citrix-clip-bridge",
-    "productName": "citrix-clip-bridge",
+    "appId": "com.yanyoo.citrix-sync-clipboard",
+    "productName": "citrix-sync-clipboard",
     "asar": true,
     "files": [
       "electron/**/*",
